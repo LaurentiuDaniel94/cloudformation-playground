@@ -34,8 +34,6 @@ Parameters:
     Description: The Database Engine 
 
 Resources:
-  # Note: Please replace the value of VpcId property
-  # with the VPC id of your default VPC
   DbSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -46,9 +44,6 @@ Resources:
           FromPort: 3306
           ToPort: 3306
           IpProtocol: tcp
-
-  # Note: Please replace the value of SubnetIds property 
-  # with the subnet ids of the subnets in your default VPC!
   DbSubnetGroup:
     Type: 'AWS::RDS::DBSubnetGroup'
     Properties:
