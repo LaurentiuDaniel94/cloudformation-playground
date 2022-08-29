@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Sample database stack for the Parameters section
+Parameters:
+  DbClass: 
+    Type: String
+    Description: RDS Instance Class
+    AllowedValues:
+      - db.t2.micro
+      - db.t2.small
+    ConstraintDescription: 'DbClass parameter can only have these values: db.t2.micro, db.t2.small'
+  MasterUsername:
+    Type: String
+    Description: Master username for the db instance
+    MaxLength: 10
+  MasterUserPassword:
+    Type: String 
+    Description: Master password for the db instance
+    MinLength: 8
+  MultiAZ:
+    Type: String
+    Description: Enable Multi-Az?
+    AllowedValues:
+      - true
+      - false
+    ConstraintDescription: MultiAZ parameter should be either true or false
+  AllocatedStorage:
+    Type: Number 
+    Description: Database storage size in GB
+    MinValue: 8
+    MaxValue: 20
+    ConstraintDescription: AllocatedStorage parameter value should be between 8 an 20.
+  DatabaseEngine:
+    Type: String
+    Description: The Database Engine 
+
+Resources:
+  # Note: Please replace the value of VpcId property
+  # with the VPC id of your default VPC
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: vpc-003663a5c2df888ee	
+      GroupDescription: 'Database instances security group'
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 3306
+          ToPort: 3306
+          IpProtocol: tcp
+
+  # Note: Please replace the value of SubnetIds property 
+  # with the subnet ids of the subnets in your default VPC!
+  DbSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: Subnets to launch db instances into
+      SubnetIds: 
+        - subnet-0026f7114ef8300ad
+        - subnet-0c2898f222aa3fbf3
+        - subnet-099c8c2ca50857eed
+
+  DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: !Ref DbClass 
+      Engine: !Ref DatabaseEngine
+      MultiAZ: !Ref MultiAZ
+      PubliclyAccessible: true
+      AllocatedStorage: !Ref AllocatedStorage
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups: 
+        - !Ref DbSecurityGroup
+      
