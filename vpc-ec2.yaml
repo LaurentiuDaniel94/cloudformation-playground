@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create VPC with Public subnet, security group and EC2
+Resources:
+
+# Create VPC, add cidr block
+
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.16.0.0/16"
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: vpc-01
+
+# Create Public Subnet, add cidrblock
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: "10.16.16.0/20"
+      MapPublicIpOnLaunch: true
+      VpcId:  !Ref myVPC 
+
+# Create route table and attach it to VPC
+
+  myRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref myVPC
+
+# Create InternetGateway
+
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: my-ig
+
+# Attach InternetGateway to VPC
+
+  myInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref myVPC
+      InternetGatewayId: !Ref myInternetGateway
+
+# Create route, it depends on the InternetGatewayAttachment
+
+  myRoute: 
+    Type: AWS::EC2::Route
+    DependsOn:
+      - myInternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref myRouteTable
+      GatewayId: !Ref myInternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+
+# Associate RouteTable with the Subnet
+
+  myGatewayRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref myRouteTable
+      SubnetId: !Ref PublicSubnet
+
+
+# Define an EC2 instance in the public subnet
+
+  myEC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+      - myRoute
+      - myGatewayRouteTableAssociation
+    Properties:
+      ImageId: ami-09e2d756e7d78558d
+      InstanceType: t2.micro
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref mySecurityGroup
+      
+
+# Create Security Group and attach it to the EC2 Instance
+
+  mySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow ICMP protocol
+      GroupName: SecurityGroup
+      VpcId: !Ref myVPC
+      SecurityGroupIngress:
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+
+
+
+
+
+
+
+
